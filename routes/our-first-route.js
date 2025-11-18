@@ -116,6 +116,34 @@ async function routes(fastify, options) {
         const updatedAnimal = await collection.findOne({ _id: objectId })
         return updatedAnimal;
     })
+
+    fastify.delete('/animals/id/:animalId', async (request, reply) => {
+        const { ObjectId } = fastify.mongo
+        let objectId;
+        try {
+            objectId = new ObjectId(request.params.animalId)
+
+        } catch (e) {
+            reply.code(400)
+            return { error: 'Invalid animalId' }
+        }
+
+
+        try {
+
+            const result = await collection.deleteOne({ _id: objectId })
+
+            if (result.deletedCount === 0) {
+                reply.code(404)
+                return { error: 'Animal not found' }
+            }
+            return { success: true, deletedId: request.params.animalId }
+
+        } catch (e) {
+            reply.code(500)
+            return { error: 'Internal server error' }
+        }
+    })
 }
 
 export default routes;
