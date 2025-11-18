@@ -6,6 +6,22 @@
 
 import { ObjectId } from "@fastify/mongodb";
 
+
+const animalBodyJsonSchema = {
+    type: 'object',
+    required: ['animal'],
+    properties: {
+        id: { type: 'integer' },
+        animal: { type: 'string' },
+        speed: { type: 'string' }
+
+    }
+}
+
+const schema = {
+    body: animalBodyJsonSchema,
+}
+
 async function routes(fastify, options) {
 
     const collection = fastify.mongo.db.collection('test_collection')
@@ -51,20 +67,6 @@ async function routes(fastify, options) {
     })
 
 
-    const animalBodyJsonSchema = {
-        type: 'object',
-        required: ['animal'],
-        properties: {
-            id: { type: 'integer' },
-            animal: { type: 'string' },
-            speed: { type: 'string' }
-
-        }
-    }
-
-    const schema = {
-        body: animalBodyJsonSchema,
-    }
 
     fastify.post('/animals', { schema }, async (request, reply) => {
         const { animal, speed } = request.body
@@ -91,6 +93,27 @@ async function routes(fastify, options) {
 
         const updatedAnimal = await collection.findOne({ animal })
 
+        return updatedAnimal;
+    })
+
+    fastify.put('/animals/id/:animalId', async (request, reply) => {
+        const { ObjectId } = fastify.mongo
+        const objectId = new ObjectId(request.params.animalId)
+        const { animal, speed } = request.body;
+        const result = await collection.updateOne(
+            { _id: objectId },
+            {
+                $set: {
+                    animal,
+                    speed
+                }
+            }
+        )
+        if (result.matchedCount === 0) {
+            throw new Error('Animal not found')
+        }
+
+        const updatedAnimal = await collection.findOne({ _id: objectId })
         return updatedAnimal;
     })
 }
